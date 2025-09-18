@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Salon {
+  id         Int       @id @default(autoincrement())
+  name       String
+  createdAt  DateTime  @default(now())
+  employees  Employee[]
+  services   Service[]
+}
+
+model Employee {
+  id         Int       @id @default(autoincrement())
+  salonId    Int
+  name       String
+  role       String    // Ej: 'estilista', 'cajera', 'gerente'
+  salary     Int       // Sueldo quincenal en RD$
+  createdAt  DateTime  @default(now())
+  salon      Salon     @relation(fields: [salonId], references: [id])
+  invoices   Invoice[]
+  payrolls   Payroll[]
+}
+
+model Service {
+  id          Int       @id @default(autoincrement())
+  salonId     Int
+  name        String
+  price       Int       // Precio en RD$
+  commission  Float      // % de comisión (ej: 10.0)
+  createdAt   DateTime  @default(now())
+  salon       Salon     @relation(fields: [salonId], references: [id])
+  invoiceLines InvoiceLine[]
+}
+
+model Invoice {
+  id          Int       @id @default(autoincrement())
+  employeeId  Int
+  total       Int       // Total de la factura
+  createdAt   DateTime  @default(now())
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  lines       InvoiceLine[]
+}
+
+model InvoiceLine {
+  id         Int      @id @default(autoincrement())
+  invoiceId  Int
+  serviceId  Int
+  invoice    Invoice  @relation(fields: [invoiceId], references: [id])
+  service    Service  @relation(fields: [serviceId], references: [id])
+}
+
+model Payroll {
+  id          Int       @id @default(autoincrement())
+  employeeId  Int
+  periodStart DateTime
+  periodEnd   DateTime
+  baseSalary  Int       // Salario fijo
+  commissions Int       // Comisiones acumuladas
+  totalPaid   Int       // base + comisiones
+  createdAt   DateTime  @default(now())
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+}
